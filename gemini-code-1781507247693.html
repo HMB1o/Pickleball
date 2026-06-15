@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Tournament Hub</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #84cc16; /* Pickleball neon green */
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            color: var(--accent-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .flex-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: #0f172a;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        input { flex: 1; }
+
+        button {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 8px 12px;
+            background: #0f172a;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th { color: var(--text-muted); }
+
+        .bracket-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .bracket-round {
+            background: #141e30;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed var(--border-color);
+        }
+
+        .matchup {
+            background: var(--card-bg);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .winner-banner {
+            background: linear-gradient(45deg, #22c55e, #84cc16);
+            color: black;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Dink & Drive Tournament Hub 🏓</h1>
+        <p style="color: var(--text-muted)">Round Robin (to 7) ➔ Semis (to 11) ➔ Finals (to 21)</p>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2>1. Players Roster</h2>
+            <div class="flex-input">
+                <input type="text" id="playerName" placeholder="Add custom player...">
+                <button onclick="addPlayer()">Add</button>
+            </div>
+            <ul id="playerList"></ul>
+        </div>
+
+        <div class="card">
+            <h2>2. Round Robin Standings</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted)">Top 4 advance to Playoffs. Score target: 7</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                    </tr>
+                </thead>
+                <tbody id="standingsTable"></tbody>
+            </table>
+            <button onclick="generatePlayoffs()" style="margin-top: 15px; width: 100%;">Lock Seeding & Generate Bracket</button>
+        </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 40px 0;">
+
+    <div class="grid">
+        <div class="card">
+            <h2>3. Log Round Robin Match</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label>Player 1:</label>
+                    <select id="p1Select" style="width: 100%; margin-top: 5px;"></select>
+                </div>
+                <div>
+                    <label>Player 2:</label>
+                    <select id="p2Select" style="width: 100%; margin-top: 5px;"></select>
+                </div>
+                <div class="flex-input" style="margin-top: 10px;">
+                    <input type="number" id="p1Score" placeholder="P1 Score" min="0">
+                    <input type="number" id="p2Score" placeholder="P2 Score" min="0">
+                </div>
+                <button onclick="logMatch()">Submit Result</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>4. Playoff Bracket</h2>
+            <div id="bracketDisplay" class="bracket-container">
+                <p style="color: var(--text-muted)">Standings must be locked to show playoffs.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Predetermined players list
+    let players = ["Hussam", "Sirish", "Bhargava", "Fadhil", "Ryan", "Aavi", "Aqib"];
+    
+    // Track records
+    let stats = {};
+    
+    // Playoff structural state
+    let playoffsGenerated = false;
+    let semis = []; // Will hold {p1, p2, p1Score, p2Score, winner}
+    let finalMatch = {p1: null, p2: null, p1Score: null, p2Score: null, winner: null};
+
+    // Initialize application
+    function init() {
+        players.forEach(p => {
+            if (!stats[p]) stats[p] = { wins: 0, losses: 0 };
+        });
+        updatePlayerList();
+        updateDropdowns();
+        updateStandings();
+    }
+
+    function addPlayer() {
+        const nameInput = document.getElementById('playerName');
+        const name = nameInput.value.trim();
+        if (name && !players.includes(name)) {
+            players.push(name);
+            stats[name] = { wins: 0, losses: 0 };
+            nameInput.value = '';
+            updatePlayerList();
+            updateDropdowns();
+            updateStandings();
+        }
+    }
+
+    function updatePlayerList() {
+        const list = document.getElementById('playerList');
+        list.innerHTML = '';
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p;
+            list.appendChild(li);
+        });
+    }
+
+    function updateDropdowns() {
+        const p1 = document.getElementById('p1Select');
+        const p2 = document.getElementById('p2Select');
+        p1.innerHTML = '';
+        p2.innerHTML = '';
+        
+        players.forEach(p => {
+            let opt1 = document.createElement('option');
+            opt1.value = p; opt1.textContent = p;
+            let opt2 = document.createElement('option');
+            opt2.value = p; opt2.textContent = p;
+            p1.appendChild(opt1);
+            p2.appendChild(opt2);
+        });
+    }
+
+    function updateStandings() {
+        const tbody = document.getElementById('standingsTable');
+        tbody.innerHTML = '';
+
+        // Sort players based on wins (highest first), then losses (lowest first)
+        let sorted = [...players].sort((a, b) => {
+            if (stats[b].wins !== stats[a].wins) {
+                return stats[b].wins - stats[a].wins;
+            }
+            return stats[a].losses - stats[b].losses;
+        });
+
+        sorted.forEach(p => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td><strong>${p}</strong></td><td>${stats[p].wins}</td><td>${stats[p].losses}</td>`;
+            tbody.appendChild(row);
+        });
+
+        return sorted; // Returns sorted list for seeding purposes
+    }
+
+    function logMatch() {
+        const p1 = document.getElementById('p1Select').value;
+        const p2 = document.getElementById('p2Select').value;
+        const s1 = parseInt(document.getElementById('p1Score').value);
+        const s2 = parseInt(document.getElementById('p2Score').value);
+
+        if (p1 === p2) {
+            alert("A player cannot play against themselves!");
+            return;
+        }
+        if (isNaN(s1) || isNaN(s2)) {
+            alert("Please input valid numerical scores.");
+            return;
+        }
+
+        // Round robin constraint verification (Game to 7 logic check)
+        if (s1 < 7 && s2 < 7) {
+            alert("In Round Robin, games are played to 7 points!");
+        }
+
+        if (s1 > s2) {
+            stats[p1].wins += 1;
+            stats[p2].losses += 1;
+        } else if (s2 > s1) {
+            stats[p2].wins += 1;
+            stats[p1].losses += 1;
+        } else {
+            alert("Tie games are not standard in Pickleball. Play out the point!");
+            return;
+        }
+
+        // Reset fields
+        document.getElementById('p1Score').value = '';
+        document.getElementById('p2Score').value = '';
+        
+        updateStandings();
+    }
+
+    function generatePlayoffs() {
+        let sorted = updateStandings();
+        if (sorted.length < 4) {
+            alert("You need at least 4 players registered to form a playoff bracket.");
+            return;
+        }
+
+        playoffsGenerated = true;
+        // Seed pairings: #1 vs #4 and #2 vs #3
+        semis = [
+            { p1: sorted[0], p2: sorted[3], s1: null, s2: null, winner: null },
+            { p1: sorted[1], p2: sorted[2], s1: null, s2: null, winner: null }
+        ];
+        
+        // Reset Finals
+        finalMatch = {p1: null, p2: null, s1: null, s2: null, winner: null};
+        renderBracket();
+    }
+
+    function logSemi(index) {
+        const s1 = parseInt(document.getElementById(`semi-${index}-s1`).value);
+        const s2 = parseInt(document.getElementById(`semi-${index}-s2`).value);
+
+        if (isNaN(s1) || isNaN(s2) || s1 === s2) {
+            alert("Enter valid, non-tied scores for the Semifinals.");
+            return;
+        }
+
+        let match = semis[index];
+        match.s1 = s1;
+        match.s2 = s2;
+        match.winner = (s1 > s2) ? match.p1 : match.p2;
+
+        // If both semis are wrapped up, populate the Finals
+        if (semis[0].winner && semis[1].winner) {
+            finalMatch.p1 = semis[0].winner;
+            finalMatch.p2 = semis[1].winner;
+        }
+        renderBracket();
+    }
+
+    function logFinal() {
+        const s1 = parseInt(document.getElementById(`final-s1`).value);
+        const s2 = parseInt(document.getElementById(`final-s2`).value);
+
+        if (isNaN(s1) || isNaN(s2) || s1 === s2) {
+            alert("Enter valid, non-tied scores for the Championship Final Match.");
+            return;
+        }
+
+        finalMatch.s1 = s1;
+        finalMatch.s2 = s2;
+        finalMatch.winner = (s1 > s2) ? finalMatch.p1 : finalMatch.p2;
+        renderBracket();
+    }
+
+    function renderBracket() {
+        const display = document.getElementById('bracketDisplay');
+        display.innerHTML = '';
+
+        // --- SEMIFINALS SECTION (GAMES TO 11) ---
+        let semisHtml = `<div class="bracket-round"><h3>Semifinals (Game to 11)</h3>`;
+        semis.forEach((match, index) => {
+            semisHtml += `
+                <div class="matchup">
+                    <div><strong>Seed vs Seed Matchup</strong></div>
+                    <div>${match.p1} vs ${match.p2}</div>
+                    ${match.winner ? `
+                        <div style="color:var(--accent-color); font-size:0.9rem;">Winner: ${match.winner} (${match.s1}-${match.s2})</div>
+                    ` : `
+                        <div class="flex-input" style="margin-top:5px;">
+                            <input type="number" id="semi-${index}-s1" placeholder="${match.p1} Score">
+                            <input type="number" id="semi-${index}-s2" placeholder="${match.p2} Score">
+                            <button onclick="logSemi(${index})">Save</button>
+                        </div>
+                    `}
+                </div>
+            `;
+        });
+        semisHtml += `</div>`;
+        display.innerHTML += semisHtml;
+
+        // --- FINALS SECTION (GAME TO 21) ---
+        if (finalMatch.p1 && finalMatch.p2) {
+            let finalHtml = `
+                <div class="bracket-round">
+                    <h3>Championship Final (Game to 21)</h3>
+                    <div class="matchup" style="border-left-color: #e11d48;">
+                        <div><strong>${finalMatch.p1}</strong> vs <strong>${finalMatch.p2}</strong></div>
+                        ${finalMatch.winner ? `
+                            <div style="color:var(--accent-color); font-size:0.9rem;">Score: ${finalMatch.s1} - ${finalMatch.s2}</div>
+                        ` : `
+                            <div class="flex-input" style="margin-top:5px;">
+                                <input type="number" id="final-s1" placeholder="${finalMatch.p1} Score">
+                                <input type="number" id="final-s2" placeholder="${finalMatch.p2} Score">
+                                <button onclick="logFinal()">Save</button>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            display.innerHTML += finalHtml;
+        }
+
+        // --- CHAMPION ANNOUNCEMENT ---
+        if (finalMatch.winner) {
+            display.innerHTML += `
+                <div class="winner-banner">
+                    👑 TOURNAMENT CHAMPION: ${finalMatch.winner} 👑
+                </div>
+            `;
+        }
+    }
+
+    // Run initialization logic on load
+    init();
+</script>
+</body>
+</html>
